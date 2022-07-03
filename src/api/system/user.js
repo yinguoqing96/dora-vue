@@ -16,6 +16,22 @@ export function getInfo(token) {
   })
 }
 
+export function saveUser(data) {
+  return request({
+    url: '/user/save',
+    method: 'post',
+    data
+  })
+}
+
+export function queryUserList(data) {
+  return request({
+    url: '/user/queryUserList',
+    method: 'post',
+    data
+  })
+}
+
 export function logout() {
   return request({
     url: '/user/logout',

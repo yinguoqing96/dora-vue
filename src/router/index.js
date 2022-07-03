@@ -71,7 +71,7 @@ export const constantRoutes = [
       {
         path: 'organize',
         name: 'Organize',
-        component: () => import('@/views/system/organize/index'),
+        component: () => import('@/views/system/dept/index'),
         meta: { title: '组织管理', icon: 'tree' }
       },
       {
