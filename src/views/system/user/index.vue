@@ -2,14 +2,14 @@
   <div class="app-container">
     <!-- 组织机构树 -->
     <el-row :gutter="20">
-      <el-col :span=4>
+      <el-col :span="4">
         <el-input
-          placeholder="输入关键字进行过滤"
           v-model="deptTreeFilterText"
-        >
-        </el-input>
+          placeholder="输入关键字进行过滤"
+        />
 
         <el-tree
+          ref="deptTreeRef"
           class="filter-tree"
           :data="deptTree"
           node-key="id"
@@ -19,12 +19,10 @@
           }"
           :filter-node-method="deptTreeFilterNode"
           highlight-current
-          ref="deptTreeRef"
           @node-click="deptTreeClick"
-        >
-        </el-tree>
+        />
       </el-col>
-      <el-col :span=20>
+      <el-col :span="20">
         <!-- 查询 -->
         <el-form :inline="true" :model="searchForm" class="demo-form-inline">
           <el-form-item label="用户名：">
@@ -41,16 +39,16 @@
 
         <!-- 列表 -->
         <el-table :data="tableData" border style="width: 100%">
-<!--          <el-table-column fixed prop="avatar" label="头像" width="80px">-->
-<!--            <template v-slot="scope">-->
-<!--              <el-avatar :size="50" :src="scope.row.avatar"></el-avatar>-->
-<!--            </template>-->
-<!--          </el-table-column>-->
-          <el-table-column fixed prop="username" label="用户名" align="center"/>
-          <el-table-column prop="realName" label="姓名" align="center"/>
-          <el-table-column prop="deptName" label="组织机构" align="center"/>
-          <el-table-column prop="phone" label="手机号" align="center"/>
-          <el-table-column prop="email" label="邮箱" align="center"/>
+          <!--          <el-table-column fixed prop="avatar" label="头像" width="80px">-->
+          <!--            <template v-slot="scope">-->
+          <!--              <el-avatar :size="50" :src="scope.row.avatar"></el-avatar>-->
+          <!--            </template>-->
+          <!--          </el-table-column>-->
+          <el-table-column align="center" fixed label="用户名" prop="username"/>
+          <el-table-column align="center" label="姓名" prop="realName"/>
+          <el-table-column align="center" label="组织机构" prop="deptName"/>
+          <el-table-column align="center" label="手机号" prop="phone"/>
+          <el-table-column align="center" label="邮箱" prop="email"/>
           <el-table-column prop="status" label="状态" width="80px" align="center">
             <template v-slot="scope">
               <el-switch
@@ -62,24 +60,25 @@
           </el-table-column>
           <el-table-column fixed="right" label="操作" width="150" align="center">
             <template v-slot="scope">
-              <el-button type="primary" class="el-icon-edit" circle @click="openSaveUserDialogForm(scope.row)"/>
-              <el-button type="danger" class="el-icon-delete" circle @click="delUser(scope.row)"/>
+              <el-button circle class="el-icon-edit" size="mini" type="primary"
+                         @click="openSaveUserDialogForm(scope.row)"
+              />
+              <el-button circle class="el-icon-delete" size="mini" type="danger" @click="delUser(scope.row)"/>
             </template>
           </el-table-column>
         </el-table>
 
         <!-- 分页插件 -->
         <el-pagination
-          v-show="tableDataTotal > 1"
-          @size-change="handlePaginationSizeChange"
-          @current-change="handlePaginationCurrentChange"
+          v-show="tableDataTotal > 10"
           :current-page="searchForm.pageNumber"
           :page-sizes="[10, 20, 30, 50]"
-          :page-size="10"
+          :page-size="searchForm.pageSize"
           layout="total, sizes, prev, pager, next, jumper"
           :total="tableDataTotal"
-        >
-        </el-pagination>
+          @size-change="handlePaginationSizeChange"
+          @current-change="handlePaginationCurrentChange"
+        />
       </el-col>
     </el-row>
 
@@ -89,11 +88,11 @@
       :visible.sync="saveUserDialogFormVisible"
       :close-on-click-modal="false"
       :destroy-on-close="true"
-      @close="closeSaveUserDialogFormVisible"
       width="30%"
       center
+      @close="closeSaveUserDialogFormVisible"
     >
-      <el-form :model="saveUserForm" ref="saveUserFormRef">
+      <el-form ref="saveUserFormRef" :model="saveUserForm" :rules="saveUserFormRules" status-icon>
         <div class="block" style="text-align: center; margin-bottom: 20px">
           <el-upload
             ref="uploadAvatar"
@@ -112,16 +111,16 @@
           </el-upload>
         </div>
         <el-divider/>
-        <el-form-item label="用户名" label-width="120px">
+        <el-form-item label="用户名" label-width="120px" prop="username">
           <el-input v-model="saveUserForm.username" style="width: 80%"/>
         </el-form-item>
-        <el-form-item v-show="!saveUserForm.id" label="密码" label-width="120px">
+        <el-form-item v-show="!saveUserForm.id" label="密码" label-width="120px" prop="password">
           <el-input v-model="saveUserForm.password" show-password style="width: 80%"/>
         </el-form-item>
-        <el-form-item label="姓名" label-width="120px">
+        <el-form-item label="姓名" label-width="120px" prop="realName">
           <el-input v-model="saveUserForm.realName" style="width: 80%"/>
         </el-form-item>
-        <el-form-item label="组织部门" label-width="120px">
+        <el-form-item label="组织部门" label-width="120px" prop="deptName">
           <el-input v-model="saveUserForm.deptName" disabled style="width: 80%"/>
         </el-form-item>
         <el-form-item label="手机号" label-width="120px">
@@ -130,9 +129,9 @@
         <el-form-item label="邮箱" label-width="120px">
           <el-input v-model="saveUserForm.emailPrefix" class="input-with-select" style="width: 80%">
             <el-select slot="append" v-model="saveUserForm.emailSuffix">
-              <el-option value="@icloud.com" label="@icloud.com"/>
-              <el-option value="@163.com" label="@163.com"/>
-              <el-option value="@126.com" label="@126.com"/>
+              <el-option label="@icloud.com" value="@icloud.com"/>
+              <el-option label="@163.com" value="@163.com"/>
+              <el-option label="@126.com" value="@126.com"/>
             </el-select>
           </el-input>
         </el-form-item>
@@ -157,12 +156,30 @@
 <script>
 import { AUTHOR_KEY } from '@/global'
 import { getToken } from '@/utils/auth'
-import { saveUser, queryUserList } from '@/api/system/user'
+import { deleteUser, queryUserList, saveUser, validateUsernameRepeat } from '@/api/system/user'
 import { getDeptTree } from '@/api/system/dept'
 
 export default {
   name: 'User',
   data() {
+    const validateUsername = (rule, value, callback) => {
+      if (!value) {
+        return callback(new Error('请输入用户名'))
+      } else if (value.length < 5 || value.length > 20) {
+        return callback(new Error('长度在 5 到 20 个字符'))
+      } else {
+        // 校验用户名重复
+        validateUsernameRepeat(this.saveUserForm.username).then(res => {
+          this.resCode = res.code
+        })
+
+        if (this.resCode === 201) {
+          return callback(new Error('用户名已存在'))
+        } else {
+          callback()
+        }
+      }
+    }
     return {
       searchForm: {
         deptId: undefined,
@@ -184,14 +201,30 @@ export default {
         id: undefined,
         avatar: undefined,
         username: undefined,
+        password: undefined,
         realName: undefined,
+        deptId: undefined,
         deptName: undefined,
         phone: undefined,
         email: undefined,
         emailPrefix: undefined,
         emailSuffix: '@icloud.com',
         status: true
-      }
+      },
+      saveUserFormRules: {
+        username: [
+          { required: true, validator: validateUsername, trigger: 'blur' }
+        ],
+        password: [
+          { required: true, message: '请输入密码', trigger: 'blur' },
+          { min: 5, max: 20, message: '长度在 5 到 20 个字符', trigger: 'blur' }
+        ],
+        realName: [
+          { required: true, message: '请输入姓名', trigger: 'blur' }
+        ]
+      },
+      resMsg: undefined,
+      resCode: undefined
     }
   },
   computed: {
@@ -203,14 +236,14 @@ export default {
       }
     }
   },
-  created() {
-    this.queryTableList()
-    this.getDeptTree()
-  },
   watch: {
     deptTreeFilterText(val) {
       this.$refs.deptTreeRef.filter(val)
     }
+  },
+  created() {
+    this.queryTableList()
+    this.getDeptTree()
   },
   methods: {
     getDeptTree() {
@@ -246,9 +279,11 @@ export default {
     },
     handlePaginationSizeChange(val) {
       this.searchForm.pageSize = val
+      this.queryTableList()
     },
     handlePaginationCurrentChange(val) {
       this.searchForm.pageNumber = val
+      this.queryTableList()
     },
     queryTableList() {
       queryUserList(this.searchForm).then(res => {
@@ -259,7 +294,9 @@ export default {
     saveUser() {
       // 创建/修改用户
       // 邮箱合并
-      this.saveUserForm.email = this.saveUserForm.emailPrefix + this.saveUserForm.emailSuffix
+      if (this.saveUserForm.emailPrefix) {
+        this.saveUserForm.email = this.saveUserForm.emailPrefix + this.saveUserForm.emailSuffix
+      }
       saveUser(this.saveUserForm).then(res => {
         if (res.code === 200) {
           this.$message({
@@ -274,23 +311,43 @@ export default {
           message: '服务器内部错误！',
           type: 'error'
         })
-      })
-      this.$refs.saveUserFormRef.clearValidate()
-      this.refreshSaveUserForm()
+      }).finally(
+        this.$refs.saveUserFormRef.clearValidate()
+      )
     },
     delUser(user) {
-      this.$message({
-        message: 'delUser!',
-        type: 'warning'
-      })
+      const id = user.id
+      deleteUser(id).then(res => {
+        if (res.code === 200) {
+          this.$message({
+            message: '删除成功!',
+            type: 'success'
+          })
+        } else {
+          this.$message({
+            message: '删除失败!',
+            type: 'error'
+          })
+        }
+      }).catch(() => {
+        this.$message({
+          message: '服务器内部错误!',
+          type: 'error'
+        })
+      }).finally(
+        this.search()
+      )
     },
     openSaveUserDialogForm(user) {
       if (user && user.id) {
         // 修改
-        this.$set(this, 'saveUserForm', user)
-        const emailFullPath = this.saveUserForm.email
-        this.saveUserForm.emailPrefix = emailFullPath.substring(0, emailFullPath.indexOf('@'))
-        this.saveUserForm.emailSuffix = emailFullPath.substring(emailFullPath.indexOf('@'))
+        // this.$set(this, 'saveUserForm', user)
+        this.saveUserForm = JSON.parse(JSON.stringify(user))
+        if (this.saveUserForm.email) {
+          const emailFullPath = this.saveUserForm.email
+          this.$set(this.saveUserForm, 'emailPrefix', emailFullPath.substring(0, emailFullPath.indexOf('@')))
+          this.$set(this.saveUserForm, 'emailSuffix', emailFullPath.substring(emailFullPath.indexOf('@')))
+        }
         this.saveUserDialogFormTitle = '修改用户'
         this.saveUserAvatarTitle = '修改'
         this.saveUserDialogFormVisible = true
@@ -354,18 +411,16 @@ export default {
       this.refreshSaveUserForm()
     },
     refreshSaveUserForm() {
-      this.saveUserForm = {
-        id: undefined,
-        avatar: undefined,
-        username: undefined,
-        realName: undefined,
-        deptName: undefined,
-        phone: undefined,
-        email: undefined,
-        emailPrefix: undefined,
-        emailSuffix: '@icloud.com',
-        status: true
-      }
+      this.saveUserForm.id = undefined
+      this.saveUserForm.avatar = undefined
+      this.saveUserForm.username = undefined
+      this.saveUserForm.password = undefined
+      this.saveUserForm.realName = undefined
+      this.saveUserForm.phone = undefined
+      this.saveUserForm.email = undefined
+      this.saveUserForm.emailPrefix = undefined
+      this.saveUserForm.emailSuffix = '@icloud.com'
+      this.saveUserForm.status = true
     }
   }
 }

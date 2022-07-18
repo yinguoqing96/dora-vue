@@ -53,21 +53,21 @@
 </template>
 
 <script>
-import { validUsername } from '@/utils/validate'
+import asc from '@/utils/asc'
 
 export default {
   name: 'Login',
   data() {
     const validateUsername = (rule, value, callback) => {
-      if (!validUsername(value)) {
-        callback(new Error('Please enter the correct user name'))
+      if (!value) {
+        callback(new Error('请输入用户名'))
       } else {
         callback()
       }
     }
     const validatePassword = (rule, value, callback) => {
       if (value.length < 5) {
-        callback(new Error('The password can not be less than 6 digits'))
+        callback(new Error('密码不能少于5位'))
       } else {
         callback()
       }
@@ -109,7 +109,12 @@ export default {
       this.$refs.loginForm.validate(valid => {
         if (valid) {
           this.loading = true
-          this.$store.dispatch('user/login', this.loginForm).then(() => {
+          // 对密码进行加密传输
+          const params = {
+            username: this.loginForm.username,
+            password: asc.encrypt(this.loginForm.password, null, null)
+          }
+          this.$store.dispatch('user/login', params).then(() => {
             this.$router.push({ path: this.redirect || '/' })
             this.loading = false
           }).catch(() => {

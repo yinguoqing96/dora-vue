@@ -51,7 +51,7 @@ export default {
     }
   },
   data() {
-    // To fix https://github.com/PanJiaChen/sharing-platform-web/issues/237
+    // To fix https://github.com/PanJiaChen/dora-vue/issues/237
     // TODO: refactor with render function
     this.onlyOneChild = null
     return {}

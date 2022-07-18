@@ -1,10 +1,9 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-
-Vue.use(Router)
-
 /* Layout */
 import Layout from '@/layout'
+
+Vue.use(Router)
 
 /**
  * Note: sub-menu only appear when route children.length >= 1
@@ -56,9 +55,9 @@ export const constantRoutes = [
   },
 
   {
-    path: '/example',
+    path: '/system',
     component: Layout,
-    redirect: '/example/table',
+    redirect: '/system',
     name: 'system',
     meta: { title: '系统管理', icon: 'el-icon-s-tools' },
     children: [
@@ -69,8 +68,8 @@ export const constantRoutes = [
         meta: { title: '用户管理', icon: 'el-icon-user-solid' }
       },
       {
-        path: 'organize',
-        name: 'Organize',
+        path: 'dept',
+        name: 'dept',
         component: () => import('@/views/system/dept/index'),
         meta: { title: '组织管理', icon: 'tree' }
       },

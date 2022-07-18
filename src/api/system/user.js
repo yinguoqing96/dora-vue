@@ -32,6 +32,26 @@ export function queryUserList(data) {
   })
 }
 
+export function validateUsernameRepeat(username) {
+  return request({
+    url: '/user/validateUsernameRepeat',
+    method: 'get',
+    params: {
+      username: username
+    }
+  })
+}
+
+export function deleteUser(id) {
+  return request({
+    url: '/user/deleteUser',
+    method: 'get',
+    params: {
+      id: id
+    }
+  })
+}
+
 export function logout() {
   return request({
     url: '/user/logout',

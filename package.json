@@ -1,8 +1,8 @@
 {
-  "name": "sharing-platform-web",
+  "name": "dora-vue",
   "version": "4.4.0",
-  "description": "A vue admin template with Element UI & axios & iconfont & permission control & lint",
-  "author": "Pan <panfree23@gmail.com>",
+  "description": "A dora-vue with Element UI & axios & iconfont & permission control & lint",
+  "author": "Yin Guoqing <yinguoqing@icloud.com>",
   "scripts": {
     "dev": "vue-cli-service serve",
     "build:prod": "vue-cli-service build",
@@ -16,6 +16,7 @@
   "dependencies": {
     "axios": "0.18.1",
     "core-js": "^3.23.3",
+    "crypto-js": "^4.1.1",
     "echarts": "^5.3.3",
     "element-ui": "2.13.2",
     "js-cookie": "2.2.0",
