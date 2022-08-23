@@ -1,129 +1,148 @@
 <template>
   <div class="app-container">
-    <el-row :gutter="20">
-      <el-col :span="20">
-        <!-- 查询 -->
-        <el-form :inline="true" :model="searchForm" class="demo-form-inline">
-          <el-form-item label="菜单名称：">
-            <el-input v-model="searchForm.menuName" placeholder="请输入"/>
-          </el-form-item>
-          <el-form-item>
-            <el-button icon="el-icon-search" type="primary" @click="queryTableList">查询</el-button>
-            <el-button type="primary" @click="openSaveMenuDialogForm">创建</el-button>
-          </el-form-item>
-        </el-form>
+    <!-- 查询 -->
+    <el-form :inline="true" :model="searchForm" class="demo-form-inline">
+      <el-form-item label="菜单名称：">
+        <el-input v-model="searchForm.menuName" clearable placeholder="请输入" />
+      </el-form-item>
+      <el-form-item>
+        <el-button icon="el-icon-search" type="primary" @click="queryTableList">查询</el-button>
+        <el-button type="primary" @click="openCreate">创建</el-button>
+      </el-form-item>
+    </el-form>
 
-        <!-- 列表 -->
-        <el-table
-          :data="tableData"
-          :load="loadTableList"
-          :tree-props="{children: 'children', hasChildren: 'hasChildren'}"
-          border
-          lazy
-          row-key="id"
-          style="width: 100%"
-        >
-          <el-table-column align="center" fixed label="菜单名称" prop="menuName"/>
-          <el-table-column align="center" label="菜单编码" prop="menuCode"/>
-          <el-table-column align="center" label="路由地址" prop="path"/>
-          <el-table-column align="center" label="组件路径" prop="component"/>
-          <el-table-column align="center" label="是否为外链" prop="isFrame"/>
-          <el-table-column align="center" label="外链地址" prop="iframeUrl"/>
-          <el-table-column align="center" label="菜单类型" prop="menuType"/>
-          <el-table-column align="center" label="图标" prop="icon"/>
-          <el-table-column align="center" label="是否隐藏" prop="visible"/>
-          <el-table-column align="center" label="状态" prop="status" width="80px">
-            <template v-slot="scope">
-              <el-switch
-                v-model="scope.row.status"
-                active-color="#13ce66"
-                inactive-color="#ff4949"
-              />
-            </template>
-          </el-table-column>
-          <el-table-column align="center" fixed="right" label="操作" width="150">
-            <template v-slot="scope">
-              <el-button circle class="el-icon-edit" size="mini" type="primary"
-                         @click="openSaveMenuDialogForm(scope.row)"
-              />
-              <el-button circle class="el-icon-delete" size="mini" type="danger" @click="delMenu(scope.row)"/>
-            </template>
-          </el-table-column>
-        </el-table>
-      </el-col>
-    </el-row>
+    <!-- 列表 -->
+    <el-table
+      ref="tableMixin"
+      :data="tableData"
+      row-key="id"
+      :tree-props="{children: 'children'}"
+      fit
+      highlight-current-row
+      style="width: 100%;"
+    >
+      <el-table-column label="菜单名称" prop="menuName" />
+      <el-table-column label="菜单地址" prop="path" />
+      <el-table-column label="组件路径" prop="component" />
+      <el-table-column label="菜单类型" prop="menuType">
+        <template v-slot="scope">
+          <template v-if="scope.row.menuType === '0'">模块</template>
+          <template v-if="scope.row.menuType === '1'">目录</template>
+          <template v-if="scope.row.menuType === '2'">菜单</template>
+        </template>
+      </el-table-column>
+      <el-table-column label="菜单ICON" prop="icon">
+        <template v-slot="scope">
+          <i :class="['dora-icon', scope.row.icon]" />
+        </template>
+      </el-table-column>
+      <el-table-column label="是否启用" prop="status">
+        <template v-slot="scope">
+          <el-tag
+            :type="scope.row.status ? 'success' : 'danger'"
+          >{{ scope.row.status ? '启用' : '禁用' }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="排序" prop="sort" />
+      <el-table-column label="操作" align="center" fixed="right" class-name="small-padding fixed-width btn_color">
+        <template v-slot="scope">
+          <el-button :disabled="scope.row.menuType==='2'" type="primary" size="mini" title="添加子菜单" icon="el-icon-document-add" @click="openCreate(scope.row.menuType, scope.row.id)" />
+          <el-divider direction="vertical" />
+          <el-button type="primary" size="mini" icon="el-icon-edit" title="编辑" @click="openUpdate(scope.row)" />
+          <el-divider direction="vertical" />
+          <el-popconfirm
+            title="确定要删除这条记录吗？"
+            @confirm="handleDelOne(scope.row.id)"
+          >
+            <el-button slot="reference" type="danger" size="mini" title="删除" icon="el-icon-delete" circle />
+          </el-popconfirm>
+        </template>
+      </el-table-column>
+    </el-table>
 
-    <!-- 创建/修改用户 -->
     <el-dialog
       :close-on-click-modal="false"
-      :destroy-on-close="true"
-      :title="saveMenuDialogFormTitle"
+      :title="textMap[saveMenuDialogStatus]"
       :visible.sync="saveMenuDialogFormVisible"
-      center
-      width="30%"
-      @close="closeSaveMenuDialogFormVisible"
+      width="500px"
     >
-      <el-form ref="saveMenuFormRef" :model="saveMenuForm" status-icon>
-        <el-form-item label="上级菜单" label-width="120px" prop="parentName">
-          <el-input v-model="saveMenuForm.parentName" style="width: 80%"/>
+      <el-form
+        ref="saveMenuFormRef"
+        :model="saveMenuForm"
+        label-position="left"
+        label-width="80px"
+        style="width: 400px; margin-left:30px;"
+      >
+        <el-input v-model="saveMenuForm.parentId" style="display:none;" />
+        <el-form-item label="菜单名称" prop="menuName">
+          <el-input v-model="saveMenuForm.menuName" />
         </el-form-item>
-        <el-form-item label="菜单名称" label-width="120px" prop="menuName">
-          <el-input v-model="saveMenuForm.menuName" style="width: 80%"/>
+        <el-form-item label="菜单地址" prop="path">
+          <el-input v-model="saveMenuForm.path" />
         </el-form-item>
-        <el-form-item label="菜单编码" label-width="120px" prop="menuCode">
-          <el-input v-model="saveMenuForm.menuCode" style="width: 80%"/>
+        <el-form-item label="组件路径" prop="component">
+          <el-input v-model="saveMenuForm.component" />
         </el-form-item>
-        <el-form-item label="路由地址" label-width="120px" prop="path">
-          <el-input v-model="saveMenuForm.path" style="width: 80%"/>
+        <el-form-item label="菜单图标" prop="icon">
+          <el-select v-model="saveMenuForm.icon" popper-class="icon-select" placeholder="请选择" style="width: 100%">
+            <el-option
+              v-for="item in iconList.glyphs"
+              :key="item.icon_id"
+              :label="iconList.css_prefix_text+item.font_class"
+              :value="iconList.css_prefix_text+item.font_class"
+            >
+              <div>
+                <i :class="[iconList.font_family, iconList.css_prefix_text+item.font_class]" />
+                <span>{{ item.font_class }}</span>
+              </div>
+            </el-option>
+          </el-select>
         </el-form-item>
-        <el-form-item label="组件路径" label-width="120px" prop="component">
-          <el-input v-model="saveMenuForm.component" style="width: 80%"/>
+        <el-form-item label="排序" prop="orderNum">
+          <el-input v-model="saveMenuForm.orderNum" />
         </el-form-item>
-        <el-form-item label="是否为外链" label-width="120px" prop="isFrame">
-          <el-input v-model="saveMenuForm.isFrame" style="width: 80%"/>
+        <el-form-item label="菜单类型" prop="menuType">
+          <el-radio-group v-model="saveMenuForm.menuType">
+            <el-radio-button label="0">模块</el-radio-button>
+            <el-radio-button label="1">目录</el-radio-button>
+            <el-radio-button label="2">菜单</el-radio-button>
+          </el-radio-group>
         </el-form-item>
-        <el-form-item v-show="this.saveMenuForm.isFrame" label="外链地址" label-width="120px" prop="iframeUrl">
-          <el-input v-model="saveMenuForm.iframeUrl" style="width: 80%"/>
-        </el-form-item>
-        <el-form-item label="菜单类型" label-width="120px" prop="menuType">
-          <el-input v-model="saveMenuForm.menuType" style="width: 80%"/>
-        </el-form-item>
-        <el-form-item label="图标" label-width="120px" prop="icon">
-          <el-input v-model="saveMenuForm.icon" style="width: 80%"/>
-        </el-form-item>
-        <el-form-item label="是否隐藏" label-width="120px" prop="visible">
-          <el-input v-model="saveMenuForm.visible" style="width: 80%"/>
-        </el-form-item>
-        <el-form-item label="状态" label-width="120px">
-          <el-switch
-            v-model="saveMenuForm.status"
-            active-color="#13ce66"
-            inactive-color="#ff4949"
-            style="width: 200px"
-          />
-        </el-form-item>
-        <el-divider/>
-        <el-form-item style="text-align: center; margin-top: 30px">
-          <el-button style="margin-right: 30px" @click="closeSaveMenuDialogFormVisible">取消</el-button>
-          <el-button type="primary" @click="saveMenu">保存</el-button>
+        <el-form-item label="是否启用" prop="status">
+          <el-radio-group v-model="saveMenuForm.status">
+            <el-radio-button label="true">启用</el-radio-button>
+            <el-radio-button label="false">禁用</el-radio-button>
+          </el-radio-group>
         </el-form-item>
       </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="saveMenuDialogFormVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveMenu()">确定</el-button>
+      </div>
     </el-dialog>
   </div>
 </template>
 
 <script>
 import { deleteMenu, queryMenuList, saveMenu } from '@/api/system/menu'
+import fontIcons from '@/assets/fonts/iconfont.json'
 
 export default {
   name: 'Menu',
   data() {
     return {
       searchForm: {
+        id: 0,
         menuName: undefined
       },
+      textMap: {
+        update: '修改',
+        create: '创建'
+      },
+      saveMenuDialogStatus: 'create',
+      iconList: fontIcons,
       tableData: [],
-      saveMenuDialogFormTitle: '创建菜单',
       saveMenuDialogFormVisible: false,
       saveMenuForm: {
         id: undefined,
@@ -134,13 +153,19 @@ export default {
         orderNum: undefined,
         path: undefined,
         component: undefined,
-        isFrame: undefined,
-        iframeUrl: undefined,
-        menuType: undefined,
-        visible: false,
+        menuType: 1,
         status: true,
         icon: undefined
-      }
+      },
+      menuTypeList: [
+        {
+          id: '1',
+          name: '目录'
+        }, {
+          id: '2',
+          name: '菜单'
+        }
+      ]
     }
   },
   created() {
@@ -148,8 +173,11 @@ export default {
   },
   methods: {
     queryTableList() {
+      if (this.searchForm.menuName) {
+        this.searchForm.id = undefined
+      }
       queryMenuList(this.searchForm).then(res => {
-        this.tableData = res.data.records
+        this.tableData = res.data
       })
     },
     loadTableList(tree, treeNode, resolve) {
@@ -169,12 +197,39 @@ export default {
         ])
       }, 1000)
     },
+    // 打开创建模态框
+    openCreate(type, id) {
+      this.resetForm()
+      delete this.saveMenuForm.id
+      // type:  0系统，1目录，2菜单和按钮
+      this.saveMenuForm.menuType = (Number(type) + 1).toString()
+      if (id === undefined || id === null) {
+        this.saveMenuForm.parentId = '0'
+      } else {
+        this.saveMenuForm.parentId = id
+      }
+      this.saveMenuDialogStatus = 'create'
+      this.saveMenuDialogFormVisible = true
+      this.$nextTick(() => {
+        this.$refs['saveMenuFormRef'].clearValidate()
+      })
+    },
+    // 打开修改模态框
+    openUpdate(row) {
+      this.resetForm()
+      this.saveMenuForm = Object.assign({}, row)
+      this.saveMenuDialogStatus = 'update'
+      this.saveMenuDialogFormVisible = true
+      this.$nextTick(() => {
+        this.$refs['saveMenuFormRef'].clearValidate()
+      })
+    },
     saveMenu() {
       // 创建/修改菜单
       saveMenu(this.saveMenuForm).then(res => {
         if (res.code === 200) {
           this.$message({
-            message: this.saveMenuDialogFormTitle + '成功!',
+            message: this.textMap[this.saveMenuDialogStatus] + '成功!',
             type: 'success'
           })
         }
@@ -188,6 +243,22 @@ export default {
       }).finally(
         this.$refs.saveMenuFormRef.clearValidate()
       )
+    },
+    // 清空表单
+    resetForm() {
+      this.saveMenuForm = {
+        id: undefined,
+        menuName: undefined,
+        menuCode: undefined,
+        parentId: undefined,
+        parentName: undefined,
+        orderNum: undefined,
+        path: undefined,
+        component: undefined,
+        menuType: 1,
+        status: true,
+        icon: undefined
+      }
     },
     delMenu(menu) {
       const id = menu.id
@@ -216,11 +287,11 @@ export default {
       if (menu && menu.id) {
         // 修改
         this.saveMenuForm = JSON.parse(JSON.stringify(menu))
-        this.saveMenuDialogFormTitle = '修改菜单'
+        this.saveMenuDialogStatus = 'update'
         this.saveMenuDialogFormVisible = true
       } else {
         // 创建
-        this.saveMenuDialogFormTitle = '创建菜单'
+        this.saveMenuDialogStatus = 'create'
         this.saveMenuDialogFormVisible = true
       }
     },
@@ -252,11 +323,6 @@ export default {
 <style scoped>
 .line {
   text-align: center;
-}
-</style>
-<style>
-.el-select .el-input {
-  width: 130px;
 }
 </style>
 
